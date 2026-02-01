@@ -1,106 +1,215 @@
---[=[
-    RED & BLACK HUB (MOBILE)
-    Real Fly Included
-    Works on Delta Executor
-]=]
+--[[
+    RED HUB ULTRA | MOBILE
+    Key: 67
+    Smooth • Clean • Rounded • Delta Compatible
+]]
 
--- SERVICES
+---------------- SERVICES ----------------
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
--- GUI
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "RedHub"
-ScreenGui.Parent = PlayerGui
+---------------- HELPERS ----------------
+local function round(ui, r)
+    local c = Instance.new("UICorner", ui)
+    c.CornerRadius = UDim.new(0, r)
+end
 
--- LOADING SCREEN
-local LoadingFrame = Instance.new("Frame")
-LoadingFrame.Size = UDim2.new(1, 0, 1, 0)
-LoadingFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-LoadingFrame.Parent = ScreenGui
+local function tween(obj, t, props)
+    TweenService:Create(obj, TweenInfo.new(t, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
+end
 
-local LoadingText = Instance.new("TextLabel")
-LoadingText.Size = UDim2.new(0, 250, 0, 50)
-LoadingText.Position = UDim2.new(0.5, -125, 0.5, -25)
-LoadingText.Text = "LOADING RED HUB..."
-LoadingText.TextColor3 = Color3.fromRGB(255, 0, 0)
-LoadingText.TextScaled = true
-LoadingText.BackgroundTransparency = 1
-LoadingText.Parent = LoadingFrame
+local function getChar()
+    return player.Character or player.CharacterAdded:Wait()
+end
 
-task.wait(3)
-LoadingFrame:Destroy()
+---------------- ROOT GUI ----------------
+local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+ScreenGui.Name = "RedHubUltra"
+ScreenGui.ResetOnSpawn = false
 
--- MAIN FRAME
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 200)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-MainFrame.BorderSizePixel = 2
-MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
-MainFrame.Parent = ScreenGui
-MainFrame.Active = true
-MainFrame.Draggable = true
+---------------- LOADING ----------------
+local Load = Instance.new("Frame", ScreenGui)
+Load.Size = UDim2.new(1,0,1,0)
+Load.BackgroundColor3 = Color3.fromRGB(10,10,10)
 
--- TITLE
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-Title.Text = "RED HUB | MOBILE"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextScaled = true
-Title.Parent = MainFrame
+local LoadText = Instance.new("TextLabel", Load)
+LoadText.Size = UDim2.new(0,300,0,50)
+LoadText.Position = UDim2.new(0.5,-150,0.5,-25)
+LoadText.Text = "Loading Red Hub Ultra..."
+LoadText.TextColor3 = Color3.fromRGB(255,0,0)
+LoadText.TextScaled = true
+LoadText.BackgroundTransparency = 1
 
--- FLY BUTTON
-local FlyButton = Instance.new("TextButton")
-FlyButton.Size = UDim2.new(0, 200, 0, 50)
-FlyButton.Position = UDim2.new(0.5, -100, 0.5, -25)
-FlyButton.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
-FlyButton.Text = "FLY : OFF"
-FlyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-FlyButton.TextScaled = true
-FlyButton.Parent = MainFrame
+task.wait(1.8)
+tween(Load, 0.6, {BackgroundTransparency = 1})
+task.wait(0.6)
+Load:Destroy()
 
--- REAL FLY LOGIC
-local flying = false
-local speed = 60
-local bv, bg
-local flyConnection
+---------------- KEY SYSTEM ----------------
+local KeyFrame = Instance.new("Frame", ScreenGui)
+KeyFrame.Size = UDim2.new(0,320,0,190)
+KeyFrame.Position = UDim2.new(0.5,-160,0.5,-95)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(18,18,18)
+KeyFrame.BorderSizePixel = 0
+KeyFrame.Active = true
+KeyFrame.Draggable = true
+round(KeyFrame, 18)
 
-FlyButton.MouseButton1Click:Connect(function()
-    local character = player.Character or player.CharacterAdded:Wait()
-    local hrp = character:WaitForChild("HumanoidRootPart")
+local KT = Instance.new("TextLabel", KeyFrame)
+KT.Size = UDim2.new(1,0,0,40)
+KT.Text = "RED HUB • KEY"
+KT.TextScaled = true
+KT.BackgroundColor3 = Color3.fromRGB(255,0,0)
+KT.TextColor3 = Color3.new(1,1,1)
+round(KT, 18)
 
-    if not flying then
-        flying = true
-        FlyButton.Text = "FLY : ON"
+local KeyBox = Instance.new("TextBox", KeyFrame)
+KeyBox.Size = UDim2.new(0,220,0,42)
+KeyBox.Position = UDim2.new(0.5,-110,0.5,-10)
+KeyBox.PlaceholderText = "Enter Key"
+KeyBox.TextScaled = true
+KeyBox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+KeyBox.TextColor3 = Color3.new(1,1,1)
+round(KeyBox, 12)
 
-        bv = Instance.new("BodyVelocity")
-        bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-        bv.Velocity = Vector3.zero
-        bv.Parent = hrp
+local KeyBtn = Instance.new("TextButton", KeyFrame)
+KeyBtn.Size = UDim2.new(0,140,0,36)
+KeyBtn.Position = UDim2.new(0.5,-70,1,-50)
+KeyBtn.Text = "UNLOCK"
+KeyBtn.TextScaled = true
+KeyBtn.BackgroundColor3 = Color3.fromRGB(40,0,0)
+KeyBtn.TextColor3 = Color3.new(1,1,1)
+round(KeyBtn, 12)
 
-        bg = Instance.new("BodyGyro")
-        bg.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-        bg.CFrame = hrp.CFrame
-        bg.Parent = hrp
+---------------- MAIN HUB ----------------
+local Hub = Instance.new("Frame", ScreenGui)
+Hub.Size = UDim2.new(0,380,0,360)
+Hub.Position = UDim2.new(0.5,-190,0.5,-180)
+Hub.BackgroundColor3 = Color3.fromRGB(15,15,15)
+Hub.Visible = false
+Hub.Active = true
+Hub.Draggable = true
+round(Hub, 22)
 
-        flyConnection = RunService.RenderStepped:Connect(function()
-            if flying then
-                local cam = workspace.CurrentCamera
-                bv.Velocity = cam.CFrame.LookVector * speed
-                bg.CFrame = cam.CFrame
+local HT = Instance.new("TextLabel", Hub)
+HT.Size = UDim2.new(1,0,0,42)
+HT.Text = "RED HUB ULTRA"
+HT.TextScaled = true
+HT.BackgroundColor3 = Color3.fromRGB(255,0,0)
+HT.TextColor3 = Color3.new(1,1,1)
+round(HT, 22)
+
+---------------- BUTTON MAKER ----------------
+local function button(txt, y)
+    local b = Instance.new("TextButton", Hub)
+    b.Size = UDim2.new(0,300,0,42)
+    b.Position = UDim2.new(0.5,-150,0,y)
+    b.Text = txt
+    b.TextScaled = true
+    b.BackgroundColor3 = Color3.fromRGB(35,0,0)
+    b.TextColor3 = Color3.new(1,1,1)
+    round(b, 14)
+    return b
+end
+
+---------------- OPTIONS ----------------
+local FlyBtn     = button("FLY : OFF", 60)
+local CarpetBtn = button("MAGIC CARPET : OFF", 112)
+local SpeedBtn  = button("SPEED : OFF", 164)
+local JumpBtn   = button("JUMP : OFF", 216)
+local ESPBtn    = button("ESP : OFF", 268)
+
+---------------- LOGIC ----------------
+local flying, carpetOn, speedOn, jumpOn, espOn = false,false,false,false,false
+local bv, bg, conn, carpet
+
+-- FLY
+FlyBtn.MouseButton1Click:Connect(function()
+    local hrp = getChar():WaitForChild("HumanoidRootPart")
+    flying = not flying
+    FlyBtn.Text = flying and "FLY : ON" or "FLY : OFF"
+
+    if flying then
+        bv = Instance.new("BodyVelocity", hrp)
+        bv.MaxForce = Vector3.new(1e9,1e9,1e9)
+        bg = Instance.new("BodyGyro", hrp)
+        bg.MaxTorque = Vector3.new(1e9,1e9,1e9)
+
+        conn = RunService.RenderStepped:Connect(function()
+            local cam = workspace.CurrentCamera
+            bv.Velocity = cam.CFrame.LookVector * 65
+            bg.CFrame = cam.CFrame
+        end)
+    else
+        if conn then conn:Disconnect() end
+        if bv then bv:Destroy() end
+        if bg then bg:Destroy() end
+    end
+end)
+
+-- MAGIC CARPET
+CarpetBtn.MouseButton1Click:Connect(function()
+    carpetOn = not carpetOn
+    CarpetBtn.Text = carpetOn and "MAGIC CARPET : ON" or "MAGIC CARPET : OFF"
+
+    if carpetOn then
+        carpet = Instance.new("Part", workspace)
+        carpet.Size = Vector3.new(6,0.3,4)
+        carpet.Color = Color3.fromRGB(150,0,0)
+        carpet.Anchored = true
+        carpet.Material = Enum.Material.SmoothPlastic
+
+        RunService.RenderStepped:Connect(function()
+            if carpetOn then
+                local hrp = getChar():WaitForChild("HumanoidRootPart")
+                carpet.CFrame = hrp.CFrame * CFrame.new(0,-3,0)
             end
         end)
     else
-        flying = false
-        FlyButton.Text = "FLY : OFF"
+        if carpet then carpet:Destroy() end
+    end
+end)
 
-        if flyConnection then flyConnection:Disconnect() end
-        if bv then bv:Destroy() end
-        if bg then bg:Destroy() end
+-- SPEED
+SpeedBtn.MouseButton1Click:Connect(function()
+    speedOn = not speedOn
+    getChar():WaitForChild("Humanoid").WalkSpeed = speedOn and 55 or 16
+    SpeedBtn.Text = speedOn and "SPEED : ON" or "SPEED : OFF"
+end)
+
+-- JUMP
+JumpBtn.MouseButton1Click:Connect(function()
+    jumpOn = not jumpOn
+    getChar():WaitForChild("Humanoid").JumpPower = jumpOn and 120 or 50
+    JumpBtn.Text = jumpOn and "JUMP : ON" or "JUMP : OFF"
+end)
+
+-- ESP
+ESPBtn.MouseButton1Click:Connect(function()
+    espOn = not espOn
+    ESPBtn.Text = espOn and "ESP : ON" or "ESP : OFF"
+
+    for _,p in pairs(Players:GetPlayers()) do
+        if p ~= player and p.Character then
+            local h = Instance.new("Highlight", p.Character)
+            h.FillColor = Color3.fromRGB(255,0,0)
+            h.Enabled = espOn
+        end
+    end
+end)
+
+---------------- KEY CHECK ----------------
+KeyBtn.MouseButton1Click:Connect(function()
+    if KeyBox.Text == "67" then
+        KeyFrame:Destroy()
+        Hub.Visible = true
+        tween(Hub, 0.4, {Size = UDim2.new(0,380,0,360)})
+    else
+        KeyBox.Text = ""
+        KeyBox.PlaceholderText = "WRONG KEY"
     end
 end)
