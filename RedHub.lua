@@ -1,138 +1,164 @@
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local PathfindingService = game:GetService("PathfindingService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
 local humanoid = character:WaitForChild("Humanoid")
-local mouse = player:GetMouse()
 
--- STATE MANAGEMENT
-local states = {fly = false, noclip = false, esp = false, airjump = false, freeze = false}
+-- STATE VARS
+local states = {
+    fly = false, noclip = false, esp = false, 
+    infJump = false, platform = false, speed = false
+}
 local flySpeed = 70
 
--- 1. ULTIMATE CLEAN UI
+-- 1. MOBILE UI SETUP
 local screenGui = Instance.new("ScreenGui", player.PlayerGui)
-screenGui.Name = "NWHUB_GOD"
+screenGui.Name = "NWMobileHub"
+screenGui.ResetOnSpawn = false
 
-local mainBtn = Instance.new("TextButton", screenGui)
-mainBtn.Size = UDim2.new(0, 50, 0, 50)
-mainBtn.Position = UDim2.new(0, 10, 0.5, -25)
-mainBtn.Text = "NW"
-mainBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-Instance.new("UICorner", mainBtn).CornerRadius = ToolBuffer.new(0, 25)
+-- Compact Open/Close Button (Draggable)
+local openBtn = Instance.new("TextButton", screenGui)
+openBtn.Size = UDim2.new(0, 50, 0, 50)
+openBtn.Position = UDim2.new(0.1, 0, 0.5, 0)
+openBtn.Text = "NW"
+openBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+openBtn.TextColor3 = Color3.new(0, 0, 0)
+openBtn.Font = Enum.Font.GothamBold
+local corner = Instance.new("UICorner", openBtn)
+corner.CornerRadius = ToolBuffer.new(0, 25)
 
-local menu = Instance.new("ScrollingFrame", screenGui)
-menu.Size = UDim2.new(0, 220, 0, 350)
-menu.Position = UDim2.new(0, 70, 0.5, -175)
-menu.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-menu.Visible = false
-menu.CanvasSize = UDim2.new(0, 0, 3, 0)
-Instance.new("UICorner", menu)
+-- Main Menu Frame
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 220, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -110, 0.5, -150)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+mainFrame.Visible = false
+Instance.new("UICorner", mainFrame)
 
-local layout = Instance.new("UIListLayout", menu)
-layout.Padding = UDim.new(0, 5)
+local scroll = Instance.new("ScrollingFrame", mainFrame)
+scroll.Size = UDim2.new(1, -10, 1, -10)
+scroll.Position = UDim2.new(0, 5, 0, 5)
+scroll.BackgroundTransparency = 1
+scroll.CanvasSize = UDim2.new(0, 0, 5, 0) -- Extra long for "moreeee"
+scroll.ScrollBarThickness = 4
+
+local layout = Instance.new("UIListLayout", scroll)
+layout.Padding = UDim.new(0, 8)
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-local function createBtn(name, color, callback)
-    local b = Instance.new("TextButton", menu)
-    b.Size = UDim2.new(0, 200, 0, 40)
-    b.Text = name
+-- Helper to make buttons
+local function makeBtn(text, color, callback)
+    local b = Instance.new("TextButton", scroll)
+    b.Size = UDim2.new(0, 180, 0, 40)
+    b.Text = text
     b.BackgroundColor3 = color or Color3.fromRGB(40, 40, 40)
     b.TextColor3 = Color3.new(1, 1, 1)
     b.Font = Enum.Font.GothamBold
+    b.TextSize = 14
     Instance.new("UICorner", b)
     b.MouseButton1Click:Connect(callback)
-    return b
 end
 
--- 2. THE FEATURES (MORE MORE MORE!)
+-- 2. THE MEGA FEATURE LIST
 
--- [TSUNAMI GAME FEATURES]
-createBtn("AUTO-WIN TSUNAMI", Color3.fromRGB(0, 120, 0), function()
-    -- Attempts to find the highest point or end zone in Escape Tsunami
-    local endZone = workspace:FindFirstChild("EndRegion") or workspace:FindFirstChild("Finish")
-    if endZone then
-        hrp.CFrame = endZone.CFrame + Vector3.new(0, 5, 0)
-    else
-        -- Fallback: Go to extreme height to avoid tsunami
-        hrp.CFrame = hrp.CFrame + Vector3.new(0, 500, 0)
-    end
-end)
-
-createBtn("TSUNAMI TRACKER (AI)", Color3.fromRGB(200, 100, 0), function()
-    -- AI Pathfinding to the safest "High Ground"
-    local parts = workspace:GetDescendants()
-    local highestPart = nil
-    local maxHeight = -math.huge
-    for _, p in pairs(parts) do
-        if p:IsA("BasePart") and p.Position.Y > maxHeight and p.CanCollide then
-            maxHeight = p.Position.Y
-            highestPart = p
-        end
-    end
-    if highestPart then
-        humanoid:MoveTo(highestPart.Position)
-    end
-end)
-
--- [PLAYER FEATURES]
-createBtn("FREEZE WORLD (LOCAL)", Color3.fromRGB(100, 100, 255), function()
-    states.freeze = not states.freeze
-    for _, p in pairs(Players:GetPlayers()) do
-        if p.Character and p ~= player then
-            p.Character.PrimaryPart.Anchored = states.freeze
-        end
-    end
-end)
-
-createBtn("FLIGHT (Hold Jump)", Color3.fromRGB(50, 50, 50), function()
+-- [ MOVEMENT ]
+makeBtn("FLY: OFF", Color3.fromRGB(0, 100, 250), function(self)
     states.fly = not states.fly
     humanoid.PlatformStand = states.fly
+    self.Text = states.fly and "FLY: ON" or "FLY: OFF"
 end)
 
-createBtn("NO CLIP", Color3.fromRGB(50, 50, 50), function()
+makeBtn("NOCLIP: OFF", nil, function(self)
     states.noclip = not states.noclip
+    self.Text = states.noclip and "NOCLIP: ON" or "NOCLIP: OFF"
 end)
 
-createBtn("KILL ALL (FE-SIM)", Color3.fromRGB(150, 0, 0), function()
-    -- Note: Only works if the game has a "Touch to kill" weapon in your hand
-    local tool = character:FindFirstChildOfClass("Tool")
-    if tool then
-        for _, v in pairs(Players:GetPlayers()) do
-            if v ~= player and v.Character and v.Character:FindFirstChild("Hitbox") then
-                firetouchinterest(v.Character.Hitbox, tool.Handle, 0)
-            end
+makeBtn("SUPER SPEED (MOBILE)", nil, function()
+    states.speed = not states.speed
+    humanoid.WalkSpeed = states.speed and 150 or 16
+end)
+
+makeBtn("INFINITE JUMP", nil, function()
+    states.infJump = not states.infJump
+end)
+
+-- [ TSUNAMI BRAINROT SPECIALS ]
+makeBtn("SKY PLATFORM (SAFE)", Color3.fromRGB(150, 0, 250), function()
+    local p = Instance.new("Part", workspace)
+    p.Size = Vector3.new(20, 1, 20)
+    p.CFrame = hrp.CFrame * CFrame.new(0, 50, 0)
+    p.Anchored = true
+    hrp.CFrame = p.CFrame + Vector3.new(0, 3, 0)
+end)
+
+makeBtn("TSUNAMI AUTO-HIGH", Color3.fromRGB(0, 200, 0), function()
+    -- Scans for highest point
+    local high = -500
+    local target = nil
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and v.Position.Y > high and v.CanCollide then
+            high = v.Position.Y
+            target = v
+        end
+    end
+    if target then hrp.CFrame = target.CFrame + Vector3.new(0, 5, 0) end
+end)
+
+-- [ EXTRAS & TROLLING ]
+makeBtn("PLAYER ESP", nil, function()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= player and p.Character then
+            local h = Instance.new("Highlight", p.Character)
+            h.FillColor = Color3.new(1, 0, 0)
         end
     end
 end)
 
-createBtn("SPAM CHAT", Color3.fromRGB(80, 80, 80), function()
-    for i = 1, 5 do
-        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("NW HUB X ON TOP!", "All")
-        task.wait(1)
+makeBtn("SPINBOT", nil, function()
+    local v = hrp:FindFirstChild("Spin") or Instance.new("BodyAngularVelocity", hrp)
+    v.Name = "Spin"
+    v.AngularVelocity = Vector3.new(0, 100, 0)
+    v.MaxTorque = Vector3.new(0, math.huge, 0)
+end)
+
+makeBtn("GIVE ALL TOOLS", Color3.fromRGB(100, 100, 0), function()
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("Tool") or v:IsA("HopperBin") then
+            v.Parent = player.Backpack
+        end
     end
 end)
 
--- 3. CORE LOOPS
-mainBtn.MouseButton1Click:Connect(function() menu.Visible = not menu.Visible end)
+makeBtn("SERVER HOP", nil, function()
+    game:GetService("TeleportService"):Teleport(game.PlaceId)
+end)
+
+-- 3. THE ENGINE (Loops)
+openBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
 
 local bv = Instance.new("BodyVelocity", hrp)
-bv.MaxForce = Vector3.new(0,0,0)
+bv.MaxForce = Vector3.new(0, 0, 0)
 
 RunService.RenderStepped:Connect(function()
     if states.fly then
         bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
         bv.Velocity = workspace.CurrentCamera.CFrame.LookVector * flySpeed
     else
-        bv.MaxForce = Vector3.new(0,0,0)
+        bv.MaxForce = Vector3.new(0, 0, 0)
     end
     
     if states.noclip then
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
+        for _, v in pairs(character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
         end
     end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if states.infJump then humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end
 end)
